@@ -1,0 +1,7 @@
+name: mlops-azure-functions
+metadata:
+  template: "azd-mlops-template"
+resourceGroup:
+  name: "rg-${{random string}}"
+  location: eastus
+  randomizeName: true

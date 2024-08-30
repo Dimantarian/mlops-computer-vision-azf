@@ -1,0 +1,39 @@
+name: Deploy Azure Resources
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Azure Developer CLI
+        run: |
+          curl -fsSL https://aka.ms/install-azd.sh | bash
+          azd auth login
+
+      - name: Deploy Azure Infrastructure
+        run: |
+          azd env new --subscription-id ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          azd up -e main
+
+      - name: Extract Keys and Save to GitHub Secrets
+        run: |
+          azd env get-values --output json > azd-env.json
+          echo "##vso[task.setvariable variable=AZURE_STORAGE_ACCOUNT;]$(jq -r '.AZURE_STORAGE_ACCOUNT' azd-env.json)"
+          echo "##vso[task.setvariable variable=AZURE_FUNCTION_APP;]$(jq -r '.AZURE_FUNCTION_APP' azd-env.json)"
+          echo "##vso[task.setvariable variable=AZURE_APP_INSIGHTS;]$(jq -r '.AZURE_APP_INSIGHTS' azd-env.json)"
+
+      - name: Deploy Azure Function
+        run: |
+          func azure functionapp publish ${{ env.AZURE_FUNCTION_APP }} --python
+
+      - name: Run Tests
+        run: |
+          pytest tests/
