@@ -18,9 +18,23 @@ jobs:
         with:
           azcliversion: "2.30.0"
           inlineScript: |
-            # Log in to Azure using the provided credentials
+            # Debugging: Output the contents of the credentials
+            echo "DEBUG: azure_credentials=${{ secrets.azure_credentials }}"
             echo "${{ secrets.azure_credentials }}" > myAzureCreds.json
-            az login --service-principal --username $(jq -r '.clientId' myAzureCreds.json) --password $(jq -r '.clientSecret' myAzureCreds.json) --tenant $(jq -r '.tenantId' myAzureCreds.json)
+            cat myAzureCreds.json
+
+            # Extract individual fields from the JSON credentials
+            CLIENT_ID=$(jq -r '.clientId' myAzureCreds.json)
+            CLIENT_SECRET=$(jq -r '.clientSecret' myAzureCreds.json)
+            TENANT_ID=$(jq -r '.tenantId' myAzureCreds.json)
+
+            # Debugging: Output extracted values to ensure they are correct
+            echo "DEBUG: CLIENT_ID=$CLIENT_ID"
+            echo "DEBUG: CLIENT_SECRET=$CLIENT_SECRET"
+            echo "DEBUG: TENANT_ID=$TENANT_ID"
+
+            # Log in to Azure using the extracted values
+            az login --service-principal --username $CLIENT_ID --password $CLIENT_SECRET --tenant $TENANT_ID
 
             # Set the Azure subscription
             az account set --subscription ${{ secrets.azure_subscription }}
@@ -35,6 +49,9 @@ jobs:
         run: |
           # Extract the Function App name from parameters.json
           FUNCTION_APP_NAME=$(jq -r '.functionAppName.value' infra/parameters.json)
+
+          # Debugging: Output the function app name
+          echo "DEBUG: FUNCTION_APP_NAME=$FUNCTION_APP_NAME"
 
           # Deploy the function app
           func azure functionapp publish $FUNCTION_APP_NAME --python
