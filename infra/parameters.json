@@ -3,7 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
       "functionAppName": {
-        "value": "onnx-cv"
+        "value": "onnxcv"
       },
       "resourceGroupName": {
         "value": "rg-onnx-azf"
