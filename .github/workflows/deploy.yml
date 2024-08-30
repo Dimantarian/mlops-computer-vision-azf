@@ -36,7 +36,11 @@ jobs:
               --parameters @./infra/parameters.json
 
       - name: Install Azure Functions Core Tools
+        env:
+          AZURE_CONFIG_DIR: $(pwd)/.azure
+
         run: |
+          mkdir -p $AZURE_CONFIG_DIR
           sudo apt-get update
           sudo apt-get install -y azure-functions-core-tools-3
 
