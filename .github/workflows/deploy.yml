@@ -53,4 +53,4 @@ jobs:
           az login --service-principal --username $(echo ${{ secrets.azure_credentials }} | jq -r '.clientId') --password $(echo ${{ secrets.azure_credentials }} | jq -r '.clientSecret') --tenant $(echo ${{ secrets.azure_credentials }} | jq -r '.tenantId')
           az account set --subscription ${{ secrets.azure_subscription }}
           # Deploy the function app
-          func azure functionapp publish $FUNCTION_APP_NAME --pytho
+          func azure functionapp publish 'onnxcv' --python
