@@ -35,6 +35,11 @@ jobs:
               --template-file ./infra/main.bicep \
               --parameters @./infra/parameters.json
 
+      - name: Install Azure Functions Core Tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y azure-functions-core-tools-3
+
       - name: Deploy Azure Function
         run: |
           # Extract the Function App name from parameters.json
