@@ -5,6 +5,11 @@ on:
     branches:
       - main
 
+env:
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: "." # set this to the path to your function app project, defaults to the repository root
+  PYTHON_VERSION: "3.9" # set this to the python version to use (e.g. '3.6', '3.7', '3.8')
+  AZURE_FUNCTIONAPP_NAME: "onnxcv"
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -12,6 +17,19 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
+
+      - name: Setup Python ${{ env.PYTHON_VERSION }} Environment
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: "Resolve Project Dependencies Using Pip"
+        shell: bash
+        run: |
+          pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt --target=".python_packages/lib/site-packages"
+          popd
 
       - name: Set up Azure CLI
         uses: azure/CLI@v1
@@ -44,17 +62,12 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y azure-functions-core-tools-3
 
-      - name: Deploy Azure Function
-        run: |
-          # Extract the Function App name from parameters.json
-          FUNCTION_APP_NAME=$(jq -r '.functionAppName.value' infra/parameters.json)
-
-           # Debugging: Output the function app name
-          echo "DEBUG: FUNCTION_APP_NAME=$FUNCTION_APP_NAME"
-
-           # Log in to Azure again to ensure `func` has the right context
-          az login --service-principal --username $CLIENT_ID --password $CLIENT_SECRET --tenant $TENANT_ID
-          az account set --subscription ${{ secrets.azure_subscription_id }}
-
-           # Deploy the function app using the extracted name
-          func azure functionapp publish $FUNCTION_APP_NAME --python
+      - name: "Run Azure Functions Action"
+        uses: Azure/functions-action@v1
+        id: fa
+        with:
+          app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+          package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+          publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+          scm-do-build-during-deployment: true
+          enable-oryx-build: true
