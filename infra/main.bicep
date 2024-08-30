@@ -21,6 +21,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
   name: '${functionAppName}-plan'
+  kind: 'functionapp'
   location: location
   sku: {
     name: 'Y1'
@@ -30,6 +31,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
 
 resource functionApp 'Microsoft.Web/sites@2021-02-01' = {
   name: functionAppName
+  kind: 'functionapp'
   location: location
   identity: {
     type: 'SystemAssigned'
