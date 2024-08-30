@@ -47,10 +47,10 @@ jobs:
         run: |
           # Extract the Function App name from parameters.json
           FUNCTION_APP_NAME=$(jq -r '.functionAppName.value' infra/parameters.json)
-             # Debugging: Output the function app name
+          # Debugging: Output the function app name
           echo "DEBUG: FUNCTION_APP_NAME=$FUNCTION_APP_NAME"
-             # Log in to Azure again to ensure `func` has the right context
-          az login --service-principal --username $(jq -r '.clientId' myAzureCreds.json) --password $(jq -r '.clientSecret' myAzureCreds.json) --tenant $(jq -r '.tenantId' myAzureCreds.json)
+          # Log in to Azure again to ensure `func` has the right context
+          az login --service-principal --username $(echo ${{ secrets.azure_credentials }} | jq -r '.clientId') --password $(echo ${{ secrets.azure_credentials }} | jq -r '.clientSecret') --tenant $(echo ${{ secrets.azure_credentials }} | jq -r '.tenantId')
           az account set --subscription ${{ secrets.azure_subscription }}
-             # Deploy the function app
-          func azure functionapp publish $FUNCTION_APP_NAME --python
+          # Deploy the function app
+          func azure functionapp publish $FUNCTION_APP_NAME --pytho
