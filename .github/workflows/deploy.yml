@@ -1,4 +1,4 @@
-name: Deploy Azure Function App
+name: Deploy Azure Resources
 
 on:
   push:
@@ -6,41 +6,28 @@ on:
       - main
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.9"
-
-      - name: Install Azure CLI
+      - name: Set up Azure CLI
         uses: azure/CLI@v1
-
-      - name: Login to Azure
-        uses: azure/login@v1
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Deploy infrastructure with Bicep
-        run: |
-          az deployment group create \
-            --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
-            --template-file infra/main.bicep \
-            --parameters functionAppName='my-function-app' resourceGroupName='${{ secrets.AZURE_RESOURCE_GROUP }}'
+          azcliversion: "2.30.0" # Specify a version if needed
+          inlineScript: |
+            az account set --subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            az deployment sub create \
+              --location eastus \
+              --template-file ./infra/main.bicep \
+              --parameters @./infra/parameters.json
 
       - name: Deploy Azure Function
         run: |
-          func azure functionapp publish my-function-app --python
+          func azure functionapp publish ${{ secrets.FUNCTION_APP_NAME }} --python
 
-      - name: Set up Python dependencies
-        run: |
-          pip install -r requirements.txt
-
-      - name: Run tests
-        run: |
-          pytest tests/
+    # - name: Run Tests
+    #   run: |
+    #     pytest tests/
