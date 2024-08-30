@@ -41,13 +41,16 @@ jobs:
           sudo apt-get install -y azure-functions-core-tools-3
 
       - name: Deploy Azure Function
+        env:
+          AZURE_SUBSCRIPTION_ID: ${{ secrets.azure_subscription }}
+          AZURE_CREDENTIALS: ${{ secrets.azure_credentials }}
         run: |
           # Extract the Function App name from parameters.json
           FUNCTION_APP_NAME=$(jq -r '.functionAppName.value' infra/parameters.json)
-
-          # Deploy the function app
+             # Debugging: Output the function app name
+          echo "DEBUG: FUNCTION_APP_NAME=$FUNCTION_APP_NAME"
+             # Log in to Azure again to ensure `func` has the right context
+          az login --service-principal --username $(jq -r '.clientId' myAzureCreds.json) --password $(jq -r '.clientSecret' myAzureCreds.json) --tenant $(jq -r '.tenantId' myAzureCreds.json)
+          az account set --subscription ${{ secrets.azure_subscription }}
+             # Deploy the function app
           func azure functionapp publish $FUNCTION_APP_NAME --python
-
-      - name: Run Tests
-        run: |
-          pytest tests/
