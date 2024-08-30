@@ -1,8 +1,17 @@
-param location string = resourceGroup().location
-param resourceGroupName string = resourceGroup().name
+@description('Name of the Function App')
+param functionAppName string
 
-resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
-  name: uniqueString(resourceGroup().id)
+@description('Name of the Resource Group')
+param resourceGroupName string
+
+@description('Location of the resources')
+param location string = resourceGroup().location
+
+@description('Application Insights Instrumentation Key')
+var applicationInsightsKey = 'your-instrumentation-key'
+
+resource storageAccount 'Microsoft.Storage/storageAccounts@2021-04-01' = {
+  name: '${functionAppName}storage'
   location: location
   sku: {
     name: 'Standard_LRS'
@@ -11,7 +20,7 @@ resource storageAccount 'Microsoft.Storage/storageAccounts@2021-09-01' = {
 }
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
-  name: 'plan-${resourceGroupName}'
+  name: '${functionAppName}-plan'
   location: location
   sku: {
     name: 'Y1'
@@ -20,7 +29,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2021-02-01' = {
 }
 
 resource functionApp 'Microsoft.Web/sites@2021-02-01' = {
-  name: 'func-${resourceGroupName}'
+  name: functionAppName
   location: location
   identity: {
     type: 'SystemAssigned'
@@ -42,13 +51,17 @@ resource functionApp 'Microsoft.Web/sites@2021-02-01' = {
           name: 'FUNCTIONS_WORKER_RUNTIME'
           value: 'python'
         }
+        {
+          name: 'APPINSIGHTS_INSTRUMENTATIONKEY'
+          value: applicationInsightsKey
+        }
       ]
     }
   }
 }
 
 resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
-  name: 'ai-${resourceGroupName}'
+  name: '${functionAppName}-ai'
   kind: 'web'
   location: location
   properties: {
@@ -56,7 +69,4 @@ resource appInsights 'Microsoft.Insights/components@2020-02-02' = {
   }
 }
 
-output storageAccountName string = storageAccount.name
-output functionAppName string = functionApp.name
-output appInsightsName string = appInsights.name
-output resourceGroup string = resourceGroupName
+output functionAppEndpoint string = functionApp.properties.defaultHostName
